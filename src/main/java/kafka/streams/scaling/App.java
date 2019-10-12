@@ -1,65 +1,57 @@
+/**
+ * A little tip:
+ * 1) Weather parquet schema:
+ * spark_schema {
+ * optional double lat;
+ * optional double lng;
+ * optional double avg_tmpr_f;
+ * optional double avg_tmpr_c;
+ * optional binary wthr_date (UTF-8);
+ * }
+ * <p>
+ * 2)
+ */
 package kafka.streams.scaling;
 
-import java.util.Optional;
+import kafka.streams.scaling.service.ForecastService;
+import lombok.RequiredArgsConstructor;
+import org.apache.kafka.streams.KafkaStreams;
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
 import java.util.Properties;
 
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.streams.KafkaStreams;
-import org.apache.kafka.streams.StreamsBuilder;
-import org.apache.kafka.streams.StreamsConfig;
-import org.apache.kafka.streams.kstream.Consumed;
-import org.apache.kafka.streams.kstream.Produced;
-import org.apache.log4j.Logger;
+@SpringBootApplication
+@RequiredArgsConstructor
+public class App implements CommandLineRunner {
 
-public class App {
+    private static final Logger log = Logger.getLogger(App.class);
 
-  static final String DONE = "done";
-  private static final Logger log = Logger.getLogger(App.class);
+    private final KafkaStreams streams;
 
-  public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
+        SpringApplication.run(App.class, args);
+    }
 
-    Properties config = new Properties();
-    config.put(StreamsConfig.APPLICATION_ID_CONFIG, "ks-scaling-app-app-id");
-    config.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG,
-      Optional.ofNullable(System.getenv("BOOTSTRAP_SERVERS_CONFIG")).orElse("localhost:9092")
-    );
-    config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-    config.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 100);
-    config.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 10);
+    @Override
+    public void run(String... args) {
+        streams.setUncaughtExceptionHandler((thread, throwable) -> log.fatal("Streams Application stopped by uncaught exception.", throwable));
+        addAppShutdownHandler(streams);
+        streams.start();
+    }
 
-    StreamsBuilder builder = new StreamsBuilder();
-
-    builder
-      .stream("inScalingTopic", Consumed.with(Serdes.String(), Serdes.String()))
-      .peek((key, value) -> {
-        if(!DONE.equals(value)) {
-          try {
-            Thread.sleep(10);
-            if (Long.valueOf(value.substring(3)) % 1000 == 0) {
-              log.info("Processed another 1000 messages");
+    private void addAppShutdownHandler(KafkaStreams streams) {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                streams.close();
+                log.info("Stream stopped");
+            } catch (Exception exc) {
+                log.error("Got exception while executing shutdown hook: ", exc);
             }
-          } catch (InterruptedException e) {
-            log.error(e);
-          }
-        }
-      })
-      .filter((key, value) -> DONE.equals(value))
-      .peek((key, value) -> log.info("Done with key " + key))
-      .to("outScalingTopic", Produced.with(Serdes.String(), Serdes.String()))
-    ;
-
-    KafkaStreams streams = new KafkaStreams(builder.build(), config);
-    streams.start();
-
-    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-      try {
-        streams.close();
-        log.info("Stream stopped");
-      } catch (Exception exc) {
-        log.error("Got exception while executing shutdown hook: ", exc);
-      }
-    }));
-  }
+        }));
+    }
 }
 

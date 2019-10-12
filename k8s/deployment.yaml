@@ -16,13 +16,17 @@ spec:
         - name: jmx-config
           configMap:
             name: kafka-streams-scaling-jmx-configmap
+      hostAliases:
+        - ip: "172.18.0.3"
+          hostnames:
+          - "sandbox-hdp.hortonworks.com"
       containers:
         - name: kafka-streams-scaling
-          image: eu.gcr.io/kafka-streams-scaling/kafka-streams-scaling:latest
+          image: uladzislautarasevich/kafka-streams-scaling:latest
           imagePullPolicy: Always
           env:
             - name: BOOTSTRAP_SERVERS_CONFIG
-              value: "my-kafka:9092"
+              value: "sandbox-hdp.hortonworks.com:6667"
         - name: prometheus-jmx-exporter
           volumeMounts:
             - name: jmx-config
@@ -38,6 +42,8 @@ spec:
             - containerPort: 5556
               name: metrics
       restartPolicy: Always
+      imagePullSecrets:
+        - name: registry-secret
   selector:
     matchLabels:
       app: kafka-streams-scaling
