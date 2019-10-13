@@ -25,9 +25,10 @@ import static kafka.streams.scaling.util.JsonParser.parseRecord;
 @RequiredArgsConstructor
 public class WeatherStreamService {
 
+    public static final int N_DIGITS_PRECISION = 5;
+
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final String WEATHER_INPUT_TOPIC_NAME = "weather_from_hive";
-    private static final int N_DIGITS_PRECISION = 5;
 
     private final HotelService hotelService;
 

@@ -27,6 +27,7 @@ public class HotelService {
 
     /**
      * Retrieves hotels data from kafka topic, parses it and creates dictionary of it in {@link Multimap}.
+     * Key is the {@code geohash} value.
      *
      * @return A {@link Multimap} instance with retrieved and parsed hotels data.
      */

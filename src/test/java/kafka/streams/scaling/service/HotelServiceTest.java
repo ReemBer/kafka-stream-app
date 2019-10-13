@@ -1,5 +1,6 @@
 package kafka.streams.scaling.service;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -21,7 +22,6 @@ import java.util.List;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
-import static kafka.streams.scaling.util.JsonParser.parseRecord;
 import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
@@ -43,8 +43,8 @@ public class HotelServiceTest extends Assert {
     private HotelService hotelService;
 
     @Autowired
-    @Qualifier("valid-hotel-record-json")
-    private String validHotelRecord;
+    @Qualifier("valid-hotel-record")
+    private ObjectNode hotelRecord;
 
     @Before
     public void setUp() {
@@ -56,13 +56,11 @@ public class HotelServiceTest extends Assert {
     @Test
     public void testFillHotelsMapBySingleRecord() {
         //given
-        final var hotel = parseRecord(validHotelRecord);
-        assertNotNull(hotel);
-        final var geohash = hotel.get("geohash").asText();
-        final var hotelRecord = new ConsumerRecord<>("dataflow", 0, 0, "", validHotelRecord);
+        final var geohash = hotelRecord.get("geohash").asText();
+        final var hotelConsumerRecord = new ConsumerRecord<>("dataflow", 0, 0, "", this.hotelRecord.toString());
         final var topicPartition = new TopicPartition("dataflow", 0);
         final var recordsMap = new HashMap<TopicPartition, List<ConsumerRecord<String, String>>>();
-        recordsMap.put(topicPartition, singletonList(hotelRecord));
+        recordsMap.put(topicPartition, singletonList(hotelConsumerRecord));
         when(hotelConsumer.poll(anyLong())).thenReturn(new ConsumerRecords<>(recordsMap));
 
         //when
@@ -70,9 +68,9 @@ public class HotelServiceTest extends Assert {
 
         //then
         assertEquals(3, hotelsMap.size());
-        assertTrue(hotelsMap.get(geohash).contains(hotel));
-        assertTrue(hotelsMap.get(geohash.substring(0, 4)).contains(hotel));
-        assertTrue(hotelsMap.get(geohash.substring(0, 3)).contains(hotel));
+        assertTrue(hotelsMap.get(geohash).contains(hotelRecord));
+        assertTrue(hotelsMap.get(geohash.substring(0, 4)).contains(hotelRecord));
+        assertTrue(hotelsMap.get(geohash.substring(0, 3)).contains(hotelRecord));
     }
 
     /**
@@ -82,20 +80,19 @@ public class HotelServiceTest extends Assert {
     @Test
     public void testDictionaryCreationWithNeighbouringHotels() {
         //given
-        final var hotel = parseRecord(validHotelRecord);
-        assertNotNull(hotel);
-        final var neighbourGeohash = hotel.get("geohash").asText().substring(0, 3) + "00";
-        final var neighbourHotel = hotel.deepCopy();
+        final var hotel = hotelRecord;
+        final var neighbourGeohash = hotelRecord.get("geohash").asText().substring(0, 3) + "00";
+        final var neighbourHotel = hotelRecord.deepCopy();
         neighbourHotel.put("geohash", neighbourGeohash);
 
-        final var hotelRecord = new ConsumerRecord<String, String>("dataflow", 0, 0, "", validHotelRecord);
-        final var neighbourHotelRecord = new ConsumerRecord<String, String>("dataflow", 0, 0, "", neighbourHotel.toString());
+        final var hotelConsumerRecord = new ConsumerRecord<>("dataflow", 0, 0, "", this.hotelRecord.toString());
+        final var neighbourHotelConsumerRecord = new ConsumerRecord<>("dataflow", 0, 0, "", neighbourHotel.toString());
         final var topicPartition = new TopicPartition("dataflow", 0);
 
         final var recordsMap = new HashMap<TopicPartition, List<ConsumerRecord<String, String>>>();
-        recordsMap.put(topicPartition, asList(hotelRecord, neighbourHotelRecord));
+        recordsMap.put(topicPartition, asList(hotelConsumerRecord, neighbourHotelConsumerRecord));
 
-        when(hotelConsumer.poll(anyLong())).thenReturn(new ConsumerRecords<String, String>(recordsMap));
+        when(hotelConsumer.poll(anyLong())).thenReturn(new ConsumerRecords<>(recordsMap));
 
         //when
         final var hotelsMap = hotelService.createDictionaryWithHotelsData();
@@ -105,15 +102,15 @@ public class HotelServiceTest extends Assert {
 
         //then
         assertEquals(2, hotelsWithThreeDigitsPrecision.size());
-        assertTrue(hotelsWithThreeDigitsPrecision.contains(hotel));
+        assertTrue(hotelsWithThreeDigitsPrecision.contains(hotelRecord));
         assertTrue(hotelsWithThreeDigitsPrecision.contains(neighbourHotel));
 
         assertEquals(1, hotelsWithFourDigitsPrecision.size());
         assertTrue(hotelsWithFourDigitsPrecision.contains(neighbourHotel));
-        assertFalse(hotelsWithFourDigitsPrecision.contains(hotel));
+        assertFalse(hotelsWithFourDigitsPrecision.contains(hotelRecord));
 
         assertEquals(1, hotelsWithFiveDigitsPrecision.size());
         assertTrue(hotelsWithFourDigitsPrecision.contains(neighbourHotel));
-        assertFalse(hotelsWithFourDigitsPrecision.contains(hotel));
+        assertFalse(hotelsWithFourDigitsPrecision.contains(hotelRecord));
     }
 }

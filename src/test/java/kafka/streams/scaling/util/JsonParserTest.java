@@ -31,6 +31,10 @@ public class JsonParserTest {
     @Qualifier("valid-hotel-record-json")
     private String validHotelRecord;
 
+    @Autowired
+    @Qualifier("valid-weather-record-json")
+    private String validWeatherRecord;
+
     @Before
     public void setUp() {
         when(weatherStreamService.buildWeatherToHotelsMappingTopology()).thenReturn(new Topology());
@@ -58,5 +62,19 @@ public class JsonParserTest {
         assertNotNull(hotelObjectNode.get("Latitude"));
         assertNotNull(hotelObjectNode.get("Longitude"));
         assertNotNull(hotelObjectNode.get("geohash"));
+    }
+
+    @Test
+    public void parseWeatherRecord() {
+        final var weatherObjectNode = JsonParser.parseRecord(validWeatherRecord);
+        assertNotNull(weatherObjectNode);
+        assertNotNull(weatherObjectNode.get("lng"));
+        assertNotNull(weatherObjectNode.get("lat"));
+        assertNotNull(weatherObjectNode.get("avg_tmpr_f"));
+        assertNotNull(weatherObjectNode.get("avg_tmpr_c"));
+        assertNotNull(weatherObjectNode.get("wthr_date"));
+        assertNotNull(weatherObjectNode.get("year"));
+        assertNotNull(weatherObjectNode.get("month"));
+        assertNotNull(weatherObjectNode.get("day"));
     }
 }

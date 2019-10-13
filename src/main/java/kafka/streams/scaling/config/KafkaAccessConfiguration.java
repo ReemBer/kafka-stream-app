@@ -49,6 +49,7 @@ public class KafkaAccessConfiguration {
         config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
         final var consumer = new KafkaConsumer<String, String>(config);
         consumer.subscribe(singleton(DEFAULT_HOTELS_TOPIC));
         return consumer;
