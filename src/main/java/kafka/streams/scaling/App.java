@@ -13,22 +13,18 @@
  */
 package kafka.streams.scaling;
 
-import kafka.streams.scaling.service.ForecastService;
 import lombok.RequiredArgsConstructor;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.log4j.Logger;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-
-import java.util.Properties;
 
 @SpringBootApplication
 @RequiredArgsConstructor
 public class App implements CommandLineRunner {
 
-    private static final Logger log = Logger.getLogger(App.class);
+    private static final Logger LOGGER = Logger.getLogger(App.class);
 
     private final KafkaStreams streams;
 
@@ -38,7 +34,7 @@ public class App implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        streams.setUncaughtExceptionHandler((thread, throwable) -> log.fatal("Streams Application stopped by uncaught exception.", throwable));
+        streams.setUncaughtExceptionHandler((thread, throwable) -> LOGGER.fatal("Streams Application stopped by uncaught exception.", throwable));
         addAppShutdownHandler(streams);
         streams.start();
     }
@@ -47,9 +43,9 @@ public class App implements CommandLineRunner {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
                 streams.close();
-                log.info("Stream stopped");
+                LOGGER.info("Stream stopped");
             } catch (Exception exc) {
-                log.error("Got exception while executing shutdown hook: ", exc);
+                LOGGER.error("Got exception while executing shutdown hook: ", exc);
             }
         }));
     }

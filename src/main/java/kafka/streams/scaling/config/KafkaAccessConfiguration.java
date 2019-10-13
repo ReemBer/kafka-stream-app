@@ -1,6 +1,6 @@
 package kafka.streams.scaling.config;
 
-import kafka.streams.scaling.service.ForecastService;
+import kafka.streams.scaling.service.WeatherStreamService;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -56,9 +56,9 @@ public class KafkaAccessConfiguration {
 
     @Bean
     @Autowired
-    public KafkaStreams getWeatherKstreamHandler(final ForecastService forecastService,
+    public KafkaStreams getWeatherKstreamHandler(final WeatherStreamService weatherStreamService,
                                                  final @Qualifier("kafka-stream-connection-config") Properties streamConsumerConfig) {
-        return new KafkaStreams(forecastService.buildForecastProducingTopology(), streamConsumerConfig);
+        return new KafkaStreams(weatherStreamService.buildWeatherToHotelsMappingTopology(), streamConsumerConfig);
     }
 
     private static String getBootstrapServers() {

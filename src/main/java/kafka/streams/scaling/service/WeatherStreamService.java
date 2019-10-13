@@ -19,10 +19,11 @@ import java.util.Objects;
 
 import static ch.hsr.geohash.GeoHash.geoHashStringWithCharacterPrecision;
 import static java.util.stream.Collectors.toList;
+import static kafka.streams.scaling.util.JsonParser.parseRecord;
 
 @Service
 @RequiredArgsConstructor
-public class ForecastService {
+public class WeatherStreamService {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final String WEATHER_INPUT_TOPIC_NAME = "weather_from_hive";
@@ -30,12 +31,17 @@ public class ForecastService {
 
     private final HotelService hotelService;
 
-    public Topology buildForecastProducingTopology() {
+    /**
+     * Builds the {@link Topology} instance to retrieve weather data, map it to hotels data, and write result to the other Kafka topic.
+     *
+     * @return {@link Topology} instance.
+     */
+    public Topology buildWeatherToHotelsMappingTopology() {
         final var hotelMap = hotelService.createDictionaryWithHotelsData();
         final var builder = new StreamsBuilder();
         builder
                 .stream(WEATHER_INPUT_TOPIC_NAME, Consumed.with(Serdes.String(), Serdes.String()))
-                .map((key, jsonStringWeather) -> new KeyValue<>(key, getWeatherObjectNode(jsonStringWeather)))
+                .map((key, jsonStringWeather) -> new KeyValue<>(key, parseRecord(jsonStringWeather)))
                 .filter((key, weather) -> Objects.nonNull(weather))
                 .flatMap((key, weather) -> {
                     enrichWeatherWithGeoHash(weather);
@@ -46,6 +52,13 @@ public class ForecastService {
         return builder.build();
     }
 
+    /**
+     * Create instances of records of the final data set (named forecast) by mapped {@code hotel} instances to current {@code weather} instance.
+     * @param key unused parameter. Need just for api compatibility
+     * @param weather weather record retrieved from kafka topic and parsed.
+     * @param mappedHotels {@code hotels} matched by geohash to current {@code weather} instance.
+     * @return The {@link List} of the final data set records for current {@code weather} record.
+     */
     private List<KeyValue<String, String>> createCurrentPieceOfForecastDataSet(final String key,
                                                                                final ObjectNode weather,
                                                                                final Pair<Collection<ObjectNode>, Integer> mappedHotels) {
@@ -57,6 +70,15 @@ public class ForecastService {
                 .collect(toList());
     }
 
+    /**
+     * Finds closest {@code hotels} to current {@code weather} record using {@code geohash} field.
+     * It tries firstly map hotels by 5 chars precision. In case of no match it uses 4 or 3 chars.
+     * Finally, it adds {@code precision} to result.
+     *
+     * @param weather weather record retrieved from kafka topic and parsed.
+     * @param hotelMap {@link Multimap} instance containing hotels retrieved from kafka topic and parsed.
+     * @return {@link Pair} instance with matched by geohash {@code hotels} and used {@code precision}
+     */
     private Pair<Collection<ObjectNode>, Integer> mapWeatherToHotelsByGeoHash(final ObjectNode weather,
                                                                               final Multimap<String, ObjectNode> hotelMap) {
         final var geohash = weather.get("geohash").asText();
@@ -73,6 +95,11 @@ public class ForecastService {
         return Pair.of(matchedHotels, usedPrecision);
     }
 
+    /**
+     * Computes and adds geohash to the {@code weather} record.
+     *
+     * @param weather weather record retrieved from kafka topic and parsed.
+     */
     private void enrichWeatherWithGeoHash(final ObjectNode weather) {
         weather.put(
                 "geohash",
@@ -80,6 +107,15 @@ public class ForecastService {
         );
     }
 
+    /**
+     * Creates record of the final data set (named forecast) with weater per day/hotel with precision.
+     *
+     * @param key unused parameter. Need just for api compatibility
+     * @param weather weather record retrieved from kafka topic and parsed.
+     * @param precision {@code weather} record mapped to {@code hotel} record with this precision.
+     * @param hotel hotel record retrieved from kafka topic and parsed.
+     * @return {@link KeyValue} instance with forecast record.
+     */
     private KeyValue<String, String> createForecastRecord(final String key,
                                                           final ObjectNode weather,
                                                           final int precision,
@@ -88,14 +124,6 @@ public class ForecastService {
         forecastForHotelPerDay.put("weather", weather);
         forecastForHotelPerDay.put("hotel", hotel);
         forecastForHotelPerDay.put("precision", precision);
-        return new KeyValue<String, String>(key, forecastForHotelPerDay.toString());
-    }
-
-    private ObjectNode getWeatherObjectNode(String jsonStringWeather) {
-        try {
-            return (ObjectNode) MAPPER.readTree(jsonStringWeather);
-        } catch (Exception e) {
-            return null;
-        }
+        return new KeyValue<>(key, forecastForHotelPerDay.toString());
     }
 }
