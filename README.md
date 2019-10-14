@@ -1,1 +1,0 @@
-# Scaling Kafka Streams applications with Kubernetes

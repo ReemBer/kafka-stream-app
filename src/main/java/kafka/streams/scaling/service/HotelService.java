@@ -69,7 +69,7 @@ public class HotelService {
      * Each key is the {@code geohash} of hotel record with 5 chars, 4 chars and 3 chars respectively.
      *
      * @param hotelsMap {@link Multimap} with hotels records.
-     * @param hotel record to be inserted to {@code hotelsMap}.
+     * @param hotel     record to be inserted to {@code hotelsMap}.
      */
     private void putHotelRecordToMap(final HashMultimap<String, ObjectNode> hotelsMap, final ObjectNode hotel) {
         var geohash = hotel.get("geohash").asText();

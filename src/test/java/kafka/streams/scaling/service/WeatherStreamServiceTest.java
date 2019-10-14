@@ -20,12 +20,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import static ch.hsr.geohash.GeoHash.geoHashStringWithCharacterPrecision;
-import static java.util.stream.Collectors.*;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.IntStream.range;
 import static java.util.stream.Stream.of;
@@ -37,7 +33,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
 /**
- * Test class for testing Kafka Stream pipeline.]
+ * Test class for testing Kafka Stream pipeline.
  * It tests {@link org.apache.kafka.streams.Topology} used in application without external Kafka Cluster.
  * To do that, it uses {@link TopologyTestDriver} and {@link ConsumerRecordFactory}.
  */

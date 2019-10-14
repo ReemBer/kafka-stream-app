@@ -55,8 +55,9 @@ public class WeatherStreamService {
 
     /**
      * Create instances of records of the final data set (named forecast) by mapped {@code hotel} instances to current {@code weather} instance.
-     * @param key unused parameter. Need just for api compatibility
-     * @param weather weather record retrieved from kafka topic and parsed.
+     *
+     * @param key          unused parameter. Need just for api compatibility
+     * @param weather      weather record retrieved from kafka topic and parsed.
      * @param mappedHotels {@code hotels} matched by geohash to current {@code weather} instance.
      * @return The {@link List} of the final data set records for current {@code weather} record.
      */
@@ -76,7 +77,7 @@ public class WeatherStreamService {
      * It tries firstly map hotels by 5 chars precision. In case of no match it uses 4 or 3 chars.
      * Finally, it adds {@code precision} to result.
      *
-     * @param weather weather record retrieved from kafka topic and parsed.
+     * @param weather  weather record retrieved from kafka topic and parsed.
      * @param hotelMap {@link Multimap} instance containing hotels retrieved from kafka topic and parsed.
      * @return {@link Pair} instance with matched by geohash {@code hotels} and used {@code precision}
      */
@@ -111,10 +112,10 @@ public class WeatherStreamService {
     /**
      * Creates record of the final data set (named forecast) with weater per day/hotel with precision.
      *
-     * @param key unused parameter. Need just for api compatibility
-     * @param weather weather record retrieved from kafka topic and parsed.
+     * @param key       unused parameter. Need just for api compatibility
+     * @param weather   weather record retrieved from kafka topic and parsed.
      * @param precision {@code weather} record mapped to {@code hotel} record with this precision.
-     * @param hotel hotel record retrieved from kafka topic and parsed.
+     * @param hotel     hotel record retrieved from kafka topic and parsed.
      * @return {@link KeyValue} instance with forecast record.
      */
     private KeyValue<String, String> createForecastRecord(final String key,

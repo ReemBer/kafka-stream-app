@@ -1,16 +1,3 @@
-/**
- * A little tip:
- * 1) Weather parquet schema:
- * spark_schema {
- * optional double lat;
- * optional double lng;
- * optional double avg_tmpr_f;
- * optional double avg_tmpr_c;
- * optional binary wthr_date (UTF-8);
- * }
- * <p>
- * 2)
- */
 package kafka.streams.scaling;
 
 import lombok.RequiredArgsConstructor;
