@@ -35,6 +35,7 @@ public class KafkaAccessConfiguration {
         config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        config.put(ConsumerConfig.DEFAULT_API_TIMEOUT_MS_CONFIG, "5000");
         config.put(StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG, 0);
         return config;
     }

@@ -46,6 +46,10 @@ public class HotelServiceTest extends Assert {
     @Qualifier("valid-hotel-record")
     private ObjectNode hotelRecord;
 
+    @Autowired
+    @Qualifier("valid-hotel-record-in-map")
+    private ObjectNode hotelRecordInMap;
+
     @Before
     public void setUp() {
         when(weatherStreamService.buildWeatherToHotelsMappingTopology()).thenReturn(new Topology());
@@ -68,9 +72,9 @@ public class HotelServiceTest extends Assert {
 
         //then
         assertEquals(3, hotelsMap.size());
-        assertTrue(hotelsMap.get(geohash).contains(hotelRecord));
-        assertTrue(hotelsMap.get(geohash.substring(0, 4)).contains(hotelRecord));
-        assertTrue(hotelsMap.get(geohash.substring(0, 3)).contains(hotelRecord));
+        assertTrue(hotelsMap.get(geohash).contains(hotelRecordInMap));
+        assertTrue(hotelsMap.get(geohash.substring(0, 4)).contains(hotelRecordInMap));
+        assertTrue(hotelsMap.get(geohash.substring(0, 3)).contains(hotelRecordInMap));
     }
 
     /**
@@ -83,7 +87,9 @@ public class HotelServiceTest extends Assert {
         final var hotel = hotelRecord;
         final var neighbourGeohash = hotelRecord.get("geohash").asText().substring(0, 3) + "00";
         final var neighbourHotel = hotelRecord.deepCopy();
+        final var neighbourHotelInMap = hotelRecordInMap.deepCopy();
         neighbourHotel.put("geohash", neighbourGeohash);
+        neighbourHotelInMap.put("geohash", neighbourGeohash);
 
         final var hotelConsumerRecord = new ConsumerRecord<>("dataflow", 0, 0, "", this.hotelRecord.toString());
         final var neighbourHotelConsumerRecord = new ConsumerRecord<>("dataflow", 0, 0, "", neighbourHotel.toString());
@@ -102,15 +108,15 @@ public class HotelServiceTest extends Assert {
 
         //then
         assertEquals(2, hotelsWithThreeDigitsPrecision.size());
-        assertTrue(hotelsWithThreeDigitsPrecision.contains(hotelRecord));
-        assertTrue(hotelsWithThreeDigitsPrecision.contains(neighbourHotel));
+        assertTrue(hotelsWithThreeDigitsPrecision.contains(hotelRecordInMap));
+        assertTrue(hotelsWithThreeDigitsPrecision.contains(neighbourHotelInMap));
 
         assertEquals(1, hotelsWithFourDigitsPrecision.size());
-        assertTrue(hotelsWithFourDigitsPrecision.contains(neighbourHotel));
-        assertFalse(hotelsWithFourDigitsPrecision.contains(hotelRecord));
+        assertTrue(hotelsWithFourDigitsPrecision.contains(neighbourHotelInMap));
+        assertFalse(hotelsWithFourDigitsPrecision.contains(hotelRecordInMap));
 
         assertEquals(1, hotelsWithFiveDigitsPrecision.size());
-        assertTrue(hotelsWithFourDigitsPrecision.contains(neighbourHotel));
-        assertFalse(hotelsWithFourDigitsPrecision.contains(hotelRecord));
+        assertTrue(hotelsWithFourDigitsPrecision.contains(neighbourHotelInMap));
+        assertFalse(hotelsWithFourDigitsPrecision.contains(hotelRecordInMap));
     }
 }

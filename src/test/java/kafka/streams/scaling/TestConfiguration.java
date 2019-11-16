@@ -12,8 +12,24 @@ import static kafka.streams.scaling.util.JsonParser.parseRecord;
 public class TestConfiguration {
 
     @Bean("valid-hotel-record")
-    public ObjectNode getValidHotelRecord() {
+    public ObjectNode getValidReceivedHotelRecord() {
         return parseRecord(getValidHotelRecordJson());
+    }
+
+    @Bean("valid-hotel-record-in-map")
+    public ObjectNode getValidHotelRecordInMap() {
+        return parseRecord(
+                "{" +
+                        "\"id\":\"3427383902209\"," +
+                        "\"name\":\"H tel Barri re Le Fouquet s\"," +
+                        "\"country\":\"FR\"," +
+                        "\"city\":\"Paris\"," +
+                        "\"address\":\"46 Avenue George V 8th arr 75008 Paris France\"," +
+                        "\"latitude\":\"48.8710709\"," +
+                        "\"longitude\":\"2.3013119\"," +
+                        "\"geohash\":\"u09wh\"" +
+                        "}"
+        );
     }
 
     @Bean("valid-hotel-record-json")

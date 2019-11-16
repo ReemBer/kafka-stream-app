@@ -11,8 +11,10 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.log4j.Logger;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Objects;
 
+import static java.util.Arrays.asList;
 import static java.util.stream.StreamSupport.stream;
 
 @Service
@@ -22,6 +24,8 @@ public class HotelService {
     private static final Logger LOGGER = Logger.getLogger(HotelService.class);
 
     private static final int CONSUMER_POLLING_DATA_ATTEMPTS_NUMBER = 50;
+
+    private static final List<String> HOTEL_FIELDS = asList("Id", "Name", "Longitude", "Latitude", "Address", "City", "Country");
 
     private final Consumer<String, String> hotelConsumer;
 
@@ -60,8 +64,22 @@ public class HotelService {
                 .map(ConsumerRecord::value)
                 .map(JsonParser::parseRecord)
                 .filter(Objects::nonNull)
+                .peek(HotelService::keysToLowerCase)
                 .forEach(hotel -> putHotelRecordToMap(hotelsMap, hotel));
         return hotelsMap;
+    }
+
+    /**
+     * The reason why we need this is what hive can't deal with Upper Case fields.
+     * I had got stuck with it when was working on Hive homework.
+     *
+     * @param hotel parsed json object which fields we want to have in lower case
+     */
+    private static void keysToLowerCase(final ObjectNode hotel) {
+        HOTEL_FIELDS.forEach(field -> {
+            hotel.put(field.toLowerCase(), hotel.get(field));
+            hotel.remove(field);
+        });
     }
 
     /**
